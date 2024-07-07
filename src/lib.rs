@@ -2,13 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //! `tracing` writer for logging into Android's logcat. Instead of linking
-//! liblog, which isn't available as a static library in the NDK, this directly
-//! connects to logd and sends messages via the [documented protocol].
+//! liblog, which isn't available as a static library in the NDK, this library
+//! directly connects to logd and sends messages via the [documented protocol].
+//!
+//! There are a few behavioral differences compared to liblog:
+//!
+//! * In the very unlikely event that Android's logd crashes, logging will stop
+//!   working because tracing-logcat does not attempt to reconnect to the logd
+//!   socket.
+//! * Only Android 5 and newer are supported. Previous versions of Android did
+//!   not use logd and implemented logcat without a userspace daemon.
+//! * Log messages longer than `4068 - <tag length> - 2` bytes are split into
+//!   multiple messages instead of being truncated. If the original message is
+//!   valid UTF-8, then the message is split at a code point boundary (not at a
+//!   grapheme cluster boundary). Otherwise, the message is split exactly at the
+//!   length limit.
 //!
 //! [documented protocol]: https://cs.android.com/android/platform/superproject/main/+/main:system/logging/liblog/README.protocol.md
-//!
-//! Note that logd only exists in Android 5 and newer. Previous versions of
-//! Android implemented logcat without a userspace daemon.
 //!
 //! ## Examples
 //!
